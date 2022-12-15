@@ -1,67 +1,102 @@
-
-
 import pygame as pg
+from sprites import *
+ 
+class Game():
+    def __init__(self): # kjører når vi starter spillet
+        pg.init()
+        self.color = (randint(0,255),randint(0,255),randint(0,255))
 
-pg.init()
+        self.WIDTH = 1200
+        self.HEIGHT = 960
 
-WHITE = (255,255,255)
-BLACK = (0,0,0)
+        self.screen = pg.display.set_mode((self.WIDTH,self.HEIGHT))
+ 
+        self.comic_sans30 = pg.font.SysFont("Comic Sans MS", 100)
+        self.FPS = 120
+        self.clock = pg.time.Clock()
 
-
-screen = pg.display.set_mode((800,600))
-player_img = pg.image.load("player.png")
-player_img = pg.transform.scale(player_img,(100,130)) # endrer størrelse på player image
-X = 50
-Y = 50
-speed = 4
-direction_x = 1
-direction_y = 1
-
-FPS = 120
-clock = pg.time.Clock()
-
-box = pg.Rect(30,30,60,60,)
-pg.draw.rect(screen, WHITE, box)
-
-playing = True
-while playing:
-    clock.tick(FPS)
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            playing = False 
-            
-    screen.fill(WHITE)
-
-    # move box 
-    keys = pg.key.get_pressed()
-
-    if keys[pg.K_w]:
-        Y -= speed
-    if keys[pg.K_s]:
-        Y += speed
-    if keys[pg.K_a]:
-        X -= speed
-    if keys[pg.K_d]:
-        X += speed
-
-
-
-    if X > 700:
-        X = 700
-    if X < 0:
-      X = 0
-
-    if Y > 500:
-        Y = 500
-    if Y < 0: 
-        Y = 0
+        self.bg = pg.image.load("pg.jpg")
         
+        
+        self.new()
+    
+    def new(self): # ny runde, kjører feks når vi dør
+        self.all_sprites = pg.sprite.Group()
+        self.enemy_group = pg.sprite.Group()
+        self.projectiles_grp = pg.sprite.Group()
+ 
+        self.hero = Player(self)
+    
+        self.all_sprites.add(self.hero)
+
+        self.score = 0
+        
+        self.i = 0
+
+        self.scoretext = self.comic_sans30.render(str(self.score), False, ((255,0,0)))
+ 
+        self.run()
+    
+ 
+    def run(self): # mens vi spiller, game loop er her
+        playing = True
+        while playing: # game loop
+            self.clock.tick(self.FPS)
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    playing = False
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_r:
+                        self.new()
+            
+            self.screen.fill((0,0,0))
+
+            self.prusektivcolide = pg.sprite.groupcollide(self.enemy_group,self.projectiles_grp,True,True)
+            if self.prusektivcolide:  
+                self.score += 1
+                self.scoretext = self.comic_sans30.render(str(self.score), False, ((255,0,0)))
 
 
+            self.colide = pg.sprite.spritecollide(self.hero,self.enemy_group,False)
+            if self.colide:
+                self.game_over_loop()
 
-    box = pg.Rect(X,Y,100,100,) 
-    pg.draw.rect(screen, BLACK, box) # tegner box
+            # lag nye fiender 
+            if len(self.enemy_group) < 3:
+             enemy = Enemy()
+             self.all_sprites.add(enemy)
+             self.enemy_group.add(enemy)
+ 
+            self.all_sprites.update() # kjør update funksjon til alle sprites i all_sprites gruppa
+ 
+            # tegner alle sprites i gruppen all_sprites til screen
+            self.all_sprites.draw(self.screen)
 
-    screen.blit(player_img, (X,Y))
+            self.screen.blit(self.scoretext,(10,10))
 
-    pg.display.update()
+ 
+            # tegner HP tekst
+            
+            
+            pg.display.update()
+        
+    def game_over_loop(self):
+        self.game_over = True
+        while self.game_over:
+            self.clock.tick(self.FPS)
+            self.game_over_text = self.comic_sans30.render("Game over, click R to restart", False, ((255,0,0)))
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.game_over = False
+                    pg.quit()
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_r:
+                       break
+            self.screen.fill((0,0,0))
+            self.screen.blit(self.game_over_text,(30,30))  # tegner tekst på skjerm. 
+            self.screen.blit(self.bg,(1200,960))
+            pg.display.update()
+
+        self.new()  # starter ny runde      
+        
+g = Game() # her lages game classen, altså spillet starter

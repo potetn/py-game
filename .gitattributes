@@ -1,2 +1,13 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+from msilib.schema import SelfReg
+from typing_extensions import Self
+import pygame as pg
+class player(pg.sprite.sprite):
+    def_init_(self):
+    pg.sprite.sprite._init_(self)
+    self.image = player_img
+
+
+
+  def update(self)
